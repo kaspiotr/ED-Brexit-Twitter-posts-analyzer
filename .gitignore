@@ -109,5 +109,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# scripts arguments
-scripts_arguments.txt
+# credentials to twitter API
+credentials
