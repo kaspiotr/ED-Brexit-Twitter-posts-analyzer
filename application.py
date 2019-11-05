@@ -1,5 +1,5 @@
 import tweepy
-import pyodbc
+import psycopg2
 
 
 def connect_to_twitter_oauth():
@@ -17,21 +17,28 @@ def connect_to_twitter_oauth():
 
 def main():
     api = connect_to_twitter_oauth()
-    public_tweets = api.home_timeline()
-    for tweet in public_tweets:
-        print(tweet.text)
-    # connection with database
-    driver = "ODBC Driver 17 for SQL Server"
-    server = "tcp:brexitanalyzer.database.windows.net"
-    database = "BrexitTweetsDB"
-    username = "BrexitAnalyzer"
-    password = "EDzespol5"
 
-    connection_string = 'DRIVER={driver};PORT=1433;SERVER={server};DATABASE={database};UID={username};PWD={password}'.format(driver=driver, server=server, database=database, username=username, password=password)
-    conn = pyodbc.connect(connection_string)
+    for tweet in tweepy.Cursor(api.search, q='#brexit', rpp=100).items(100):
+        print(tweet.text)
+
+    # connection with database
+    server = "ec2-54-217-225-16.eu-west-1.compute.amazonaws.com"
+    database = "d8raoh0vdr0n8q"
+    username = "qcgqzcyhxmjkvi"
+    password = "a0a102e858cee2eadf4a14cebf40e77659656cd7e9ef0d645759a68a3263053e"
+    port = 5432
+
+    conn = psycopg2.connect(
+        dbname=database,
+        user=username,
+        password=password,
+        host=server,
+        port=port
+    )
 
     print("connected")
     cursor = conn.cursor()
+    print(cursor.execute('SELECT * FROM USERS'))
 
 
 if __name__ == '__main__':
