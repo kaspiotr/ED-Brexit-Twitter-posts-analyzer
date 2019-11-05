@@ -111,3 +111,6 @@ venv.bak/
 
 # credentials to twitter API
 credentials
+
+# credentials to connect with database
+dbconnectioncredentials
