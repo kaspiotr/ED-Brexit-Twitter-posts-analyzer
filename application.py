@@ -15,30 +15,33 @@ def connect_to_twitter_oauth():
     return api
 
 
+def connect_to_database():
+    file = open('dbconnectioncredentials', 'r')
+    creds_dict = {}
+    for line in file:
+        credential = line.split("=")
+        value = credential[1]
+        creds_dict[credential[0]] = value[0:len(value)-1]
+    connection = psycopg2.connect(
+        host=creds_dict['SERVER'],
+        dbname=creds_dict['DATABASE_NAME'],
+        user=creds_dict['USER_NAME'],
+        password=creds_dict['PASSWORD'],
+        port=creds_dict['PORT']
+    )
+    return connection
+
+
 def main():
     api = connect_to_twitter_oauth()
 
     for tweet in tweepy.Cursor(api.search, q='#brexit', rpp=100).items(100):
         print(tweet.text)
 
-    # connection with database
-    server = "ec2-54-217-225-16.eu-west-1.compute.amazonaws.com"
-    database = "d8raoh0vdr0n8q"
-    username = "qcgqzcyhxmjkvi"
-    password = "a0a102e858cee2eadf4a14cebf40e77659656cd7e9ef0d645759a68a3263053e"
-    port = 5432
-
-    conn = psycopg2.connect(
-        dbname=database,
-        user=username,
-        password=password,
-        host=server,
-        port=port
-    )
-
+    conn = connect_to_database()
     print("connected")
     cursor = conn.cursor()
-    print(cursor.execute('SELECT * FROM USERS'))
+    print(cursor.execute('SELECT * FROM postgres."public".users'))
 
 
 if __name__ == '__main__':
