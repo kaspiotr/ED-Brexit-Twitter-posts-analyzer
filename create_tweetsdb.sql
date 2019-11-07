@@ -3,7 +3,7 @@ DROP TABLE IF EXISTS tweets CASCADE;
 CREATE TABLE tweets (
     id BIGINT,
     userId BIGINT REFERENCES users(id),
-    text VARCHAR(280),
+    fullText VARCHAR(280),
     createdAt TIMESTAMP,
     inReplyToTweetId BIGINT,
     inReplyToUserId BIGINT,
