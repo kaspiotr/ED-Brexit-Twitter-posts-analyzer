@@ -37,11 +37,12 @@ def main():
 
     for tweet in tweepy.Cursor(api.search, q='#brexit', rpp=100).items(100):
         print(tweet.text)
+        print("Retweets no.: %d" % tweet.retweet_count)
 
     conn = connect_to_database()
     print("connected")
     cursor = conn.cursor()
-    print(cursor.execute('SELECT * FROM postgres."public".users'))
+    print(cursor.execute('SELECT * FROM postgres.public.users'))
 
 
 if __name__ == '__main__':
