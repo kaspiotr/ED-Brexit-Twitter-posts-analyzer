@@ -62,7 +62,7 @@ def get_tweets(api):
     ax.set_xticklabels(x, rotation=45, zorder=100)
     ax.set_yticklabels(y)
 
-    fig.savefig(fname="most_retweet_users2.png")
+    # fig.savefig(fname="most_retweet_users2.png")
 
     counts = Counter(x[0] for x in result)
 
@@ -75,17 +75,21 @@ def get_tweets(api):
     ax.set_xticklabels(x, rotation=45, zorder=100)
     ax.set_yticklabels(y)
 
-    fig.savefig(fname="most_active_users2.png")
+    # fig.savefig(fname="most_active_users2.png")
 
 
 def main():
     api = connect_to_twitter_oauth()
+
+    for tweet in tweepy.Cursor(api.search, q='#brexit', rpp=100).items(100):
+        print(tweet.text)
+        print("Retweets no.: %d" % tweet.retweet_count)
     get_tweets(api)
 
     conn = connect_to_database()
     print("connected")
     cursor = conn.cursor()
-    print(cursor.execute('SELECT * FROM postgres."public".users'))
+    print(cursor.execute('SELECT * FROM postgres.public.users'))
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ class User:
 class Tweet:
     id = None
     user_id = None
-    content = None
+    full_text = None
     created_at = None
     retweets_number = None
     likes_number = None
@@ -30,7 +30,7 @@ class Tweet:
     def __init__(self, id, user_id, content, created_at, retweets_number, likes_number, comments_number, in_reply_to_tweet_id, in_reply_to_user_id, sentiment):
         self.id = id
         self.user_id = user_id
-        self.content = content
+        self.full_text = content
         self.created_at = created_at
         self.retweets_number = retweets_number
         self.likes_number = likes_number
@@ -56,3 +56,12 @@ class Hashtag:
     def __init__(self, id, name):
         self.id = id
         self.name = name
+
+
+class Retweet:
+    tweet_id = None
+    user_id = None
+
+    def __init__(self, tweet_id, user_id):
+        self.tweet_id = tweet_id
+        self.user_id = user_id
