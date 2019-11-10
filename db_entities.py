@@ -27,7 +27,7 @@ class Tweet:
     in_reply_to_user_id = None
     sentiment = None
 
-    def __init__(self, id, user_id, content, created_at, retweets_number, likes_number, comments_number, in_reply_to_tweet_id, in_reply_to_user_id, sentiment):
+    def __init__(self, id, user_id, content, created_at, retweets_number, likes_number, comments_number, in_reply_to_tweet_id, in_reply_to_user_id):
         self.id = id
         self.user_id = user_id
         self.full_text = content
@@ -37,7 +37,6 @@ class Tweet:
         self.comments_number = comments_number
         self.in_reply_to_tweet_id = in_reply_to_tweet_id
         self.in_reply_to_user_id = in_reply_to_user_id
-        self.sentiment = sentiment
 
 
 class MarkedUser:
