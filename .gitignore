@@ -114,3 +114,6 @@ credentials
 
 # credentials to connect with database
 dbconnectioncredentials
+
+# backup folder with tweets in josnl files
+backup
