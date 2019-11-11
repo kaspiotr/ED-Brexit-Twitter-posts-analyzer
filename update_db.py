@@ -28,6 +28,7 @@ def update_db(db_connection):
         with jsonlines.open(jsonl_file, mode='r') as reader:
             for tweet_dict in reader:
                 insert_into_db(db_connection, tweet_dict)
+    db_connection.close()
 
 
 def insert_into_db(db_connection, tweet_dict):
@@ -37,10 +38,13 @@ def insert_into_db(db_connection, tweet_dict):
     postgres_insert_query = "INSERT INTO tweets (id, userid, fulltext, createdat, inreplytotweetid, inreplytouserid) VALUES (%s, %s, %s, %s, %s, %s);"
     record_to_insert = (tweet_dict['id'], tweet_dict['user']['id'], full_text, created_at, tweet_dict['in_reply_to_status_id'], tweet_dict['in_reply_to_user_id'])
     cursor.execute(postgres_insert_query, record_to_insert)
+    db_connection.commit()
     user_dict = tweet_dict['user']
     postgres_insert_query = "INSERT INTO users (id, name, screenname, location, description, language, followersnumber, friendsnumber) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"
     record_to_insert = (user_dict['id'], user_dict['name'], user_dict['screen_name'], user_dict['location'], user_dict['description'], user_dict['lang'], user_dict['followers_count'], user_dict['friends_count'])
     cursor.execute(postgres_insert_query, record_to_insert)
+    db_connection.commit()
+    cursor.close()
 
 
 def _insert_text(tweet_dict):
@@ -76,8 +80,8 @@ def _insert_month_no(month_str):
 
 
 def main():
-    conn = connect_to_database()
     print("connected")
+    conn = connect_to_database()
     update_db(conn)
 
 

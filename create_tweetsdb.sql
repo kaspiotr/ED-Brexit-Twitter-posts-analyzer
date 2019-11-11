@@ -3,7 +3,7 @@ DROP TABLE IF EXISTS tweets CASCADE;
 CREATE TABLE tweets (
     id BIGINT,
     userId BIGINT REFERENCES users(id),
-    fullText VARCHAR(280),
+    fullText VARCHAR(1680),
     createdAt TIMESTAMP,
     inReplyToTweetId BIGINT,
     inReplyToUserId BIGINT,
@@ -21,6 +21,7 @@ CREATE TABLE users (
     description VARCHAR (160),
     language VARCHAR(10),
     followersNumber INT,
+    friendsNumber INT,
     PRIMARY KEY (id)
 );
 
