@@ -44,6 +44,15 @@ def insert_into_db(db_connection, tweet_dict):
     record_to_insert = (user_dict['id'], user_dict['name'], user_dict['screen_name'], user_dict['location'], user_dict['description'], user_dict['lang'], user_dict['followers_count'], user_dict['friends_count'])
     cursor.execute(postgres_insert_query, record_to_insert)
     db_connection.commit()
+    if tweet_dict['in_reply_to_status_id'] is not None and tweet_dict['in_reply_to_user_id'] is not None:
+        postgres_insert_query = "INSERT INTO comments (tweetid, userid) VALUES (%s, %s);"
+        record_to_insert = (tweet_dict['in_reply_to_status_id'], tweet_dict['in_reply_to_user_id'])
+        try:
+            cursor.execute(postgres_insert_query, record_to_insert)
+            db_connection.commit()
+        except psycopg2.errors.ForeignKeyViolation:
+            print('There were no user with id %s or tweet with id %s found. Row was not inserted into comments table' % (tweet_dict['in_reply_to_user_id'], tweet_dict['in_reply_to_status_id']))
+            db_connection.rollback()
     cursor.close()
 
 
