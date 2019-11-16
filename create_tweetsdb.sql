@@ -25,14 +25,6 @@ CREATE TABLE users (
     PRIMARY KEY (id)
 );
 
-DROP TABLE IF EXISTS markedUsers CASCADE;
-
-CREATE TABLE markedUsers (
-    tweetId BIGINT REFERENCES tweets(id),
-    userId BIGINT,
-    PRIMARY KEY (tweetId, userId)
-);
-
 DROP TABLE IF EXISTS hashtags CASCADE;
 
 CREATE TABLE hashtags (

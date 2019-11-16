@@ -2,6 +2,7 @@ import psycopg2
 import jsonlines
 import os
 import glob
+import re
 
 
 def connect_to_database():
@@ -35,11 +36,24 @@ def insert_into_db(db_connection, tweet_dict):
     cursor = db_connection.cursor()
     full_text = _insert_text(tweet_dict)
     created_at = _insert_created_at(tweet_dict)
-    postgres_insert_query = "INSERT INTO tweets (id, userid, fulltext, createdat, inreplytotweetid, inreplytouserid) VALUES (%s, %s, %s, %s, %s, %s);"
-    record_to_insert = (tweet_dict['id'], tweet_dict['user']['id'], full_text, created_at, tweet_dict['in_reply_to_status_id'], tweet_dict['in_reply_to_user_id'])
-    cursor.execute(postgres_insert_query, record_to_insert)
-    db_connection.commit()
+
     user_dict = tweet_dict['user']
+    if _is_retweet(tweet_dict['text']):
+        postgres_insert_query = "INSERT INTO retweets (tweetid, userid) VALUES (%s, %s);"
+        record_to_insert = (tweet_dict['retweeted_status']['id'], user_dict['id'])
+        try:
+            cursor.execute(postgres_insert_query, record_to_insert)
+            db_connection.commit()
+        except psycopg2.errors.ForeignKeyViolation:
+            print('There were no tweet with id %s found in tweets table. Row was not inserted into retweets table' % tweet_dict['retweeted_status']['id'])
+            db_connection.rollback()
+        except psycopg2.errors.UniqueViolation:
+            print('User with id %s has retweeted the same tweet (with id %s) once again' % (user_dict['id'], tweet_dict['retweeted_status']['id']))
+    else:
+        postgres_insert_query = "INSERT INTO tweets (id, userid, fulltext, createdat, inreplytotweetid, inreplytouserid) VALUES (%s, %s, %s, %s, %s, %s);"
+        record_to_insert = (tweet_dict['id'], tweet_dict['user']['id'], full_text, created_at, tweet_dict['in_reply_to_status_id'], tweet_dict['in_reply_to_user_id'])
+        cursor.execute(postgres_insert_query, record_to_insert)
+        db_connection.commit()
     postgres_select_query = "SELECT name FROM users WHERE id=%s;"
     cursor.execute(postgres_select_query, [user_dict['id']])
     result = cursor.fetchone()
@@ -61,7 +75,25 @@ def insert_into_db(db_connection, tweet_dict):
         except psycopg2.errors.ForeignKeyViolation:
             print('There were no user with id %s or tweet with id %s found. Row was not inserted into comments table' % (tweet_dict['in_reply_to_user_id'], tweet_dict['in_reply_to_status_id']))
             db_connection.rollback()
+    if len(tweet_dict['entities']['user_mentions']) > 0:
+        if _is_retweet(tweet_dict['text']):
+            mentioned_users = tweet_dict['entities']['user_mentions'][1:]
+        else:
+            mentioned_users = tweet_dict['entities']['user_mentions']
+        for mentioned_user in mentioned_users:
+            postgres_insert_query = "INSERT INTO mentions (tweetid, userid) VALUES (%s, %s);"
+            record_to_insert = (tweet_dict['id'], mentioned_user['id'])
+            try:
+                cursor.execute(postgres_insert_query, record_to_insert)
+                db_connection.commit()
+            except psycopg2.errors.ForeignKeyViolation:
+                print('There were no tweet with id %s found in tweets table. Row was not inserted into mentions table' % tweet_dict['id'])
+                db_connection.rollback()
     cursor.close()
+
+
+def _is_retweet(text):
+    return re.search("^RT @.+:", text)
 
 
 def _insert_text(tweet_dict):
