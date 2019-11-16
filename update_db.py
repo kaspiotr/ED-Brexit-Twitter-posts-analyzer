@@ -40,9 +40,17 @@ def insert_into_db(db_connection, tweet_dict):
     cursor.execute(postgres_insert_query, record_to_insert)
     db_connection.commit()
     user_dict = tweet_dict['user']
-    postgres_insert_query = "INSERT INTO users (id, name, screenname, location, description, language, followersnumber, friendsnumber) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"
-    record_to_insert = (user_dict['id'], user_dict['name'], user_dict['screen_name'], user_dict['location'], user_dict['description'], user_dict['lang'], user_dict['followers_count'], user_dict['friends_count'])
-    cursor.execute(postgres_insert_query, record_to_insert)
+    postgres_select_query = "SELECT name FROM users WHERE id=%s;"
+    cursor.execute(postgres_select_query, [user_dict['id']])
+    result = cursor.fetchone()
+    if result is not None:
+        postgres_alter_query = "UPDATE users SET name = %s, screenname = %s, location = %s, description = %s, language = %s, followersnumber = %s, friendsnumber = %s WHERE id=%s;"
+        record_to_alter = (user_dict['name'], user_dict['screen_name'], user_dict['location'], user_dict['description'], user_dict['lang'], user_dict['followers_count'], user_dict['friends_count'], user_dict['id'])
+        cursor.execute(postgres_alter_query, record_to_alter)
+    else:
+        postgres_insert_query = "INSERT INTO users (id, name, screenname, location, description, language, followersnumber, friendsnumber) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"
+        record_to_insert = (user_dict['id'], user_dict['name'], user_dict['screen_name'], user_dict['location'], user_dict['description'], user_dict['lang'], user_dict['followers_count'], user_dict['friends_count'])
+        cursor.execute(postgres_insert_query, record_to_insert)
     db_connection.commit()
     if tweet_dict['in_reply_to_status_id'] is not None and tweet_dict['in_reply_to_user_id'] is not None:
         postgres_insert_query = "INSERT INTO comments (tweetid, userid) VALUES (%s, %s);"
