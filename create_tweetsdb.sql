@@ -7,6 +7,8 @@ CREATE TABLE tweets (
     createdAt TIMESTAMP,
     inReplyToTweetId BIGINT,
     inReplyToUserId BIGINT,
+    likesNumber INT,
+    retweetsNumber INT,
     sentiment DOUBLE PRECISION,
     PRIMARY KEY (id)
 );
