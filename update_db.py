@@ -75,12 +75,8 @@ def insert_into_db(db_connection, tweet_dict):
         except psycopg2.errors.ForeignKeyViolation:
             print('There were no user with id %s or tweet with id %s found. Row was not inserted into comments table' % (tweet_dict['in_reply_to_user_id'], tweet_dict['in_reply_to_status_id']))
             db_connection.rollback()
-    if len(tweet_dict['entities']['user_mentions']) > 0:
-        if _is_retweet(tweet_dict['text']):
-            mentioned_users = tweet_dict['entities']['user_mentions'][1:]
-        else:
-            mentioned_users = tweet_dict['entities']['user_mentions']
-        for mentioned_user in mentioned_users:
+    if not _is_retweet(tweet_dict['text']) and len(tweet_dict['entities']['user_mentions']) > 0:
+        for mentioned_user in tweet_dict['entities']['user_mentions']:
             postgres_insert_query = "INSERT INTO mentions (tweetid, userid) VALUES (%s, %s);"
             record_to_insert = (tweet_dict['id'], mentioned_user['id'])
             try:
