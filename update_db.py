@@ -61,8 +61,8 @@ def insert_into_db(db_connection, tweet_dict, hashtags_set):
             print('User with id %s has retweeted the same tweet (with id %s) once again. Row was not inserted into retweets table' % (user_dict['id'], tweet_dict['retweeted_status']['id']))
             db_connection.rollback()
     else:
-        postgres_insert_query = "INSERT INTO tweets (id, userid, fulltext, createdat, inreplytotweetid, inreplytouserid, likesnumber, retweetsnumber) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"
-        record_to_insert = (tweet_dict['id'], tweet_dict['user']['id'], full_text, created_at, tweet_dict['in_reply_to_status_id'], tweet_dict['in_reply_to_user_id'], tweet_dict['favorite_count'], tweet_dict['retweet_count'])
+        postgres_insert_query = "INSERT INTO tweets (id, userid, fulltext, createdat, inreplytotweetid, inreplytouserid) VALUES (%s, %s, %s, %s, %s, %s);"
+        record_to_insert = (tweet_dict['id'], tweet_dict['user']['id'], full_text, created_at, tweet_dict['in_reply_to_status_id'], tweet_dict['in_reply_to_user_id'])
         cursor.execute(postgres_insert_query, record_to_insert)
         db_connection.commit()
         for hashtag_name in tweet_dict['entities']['hashtags']:
