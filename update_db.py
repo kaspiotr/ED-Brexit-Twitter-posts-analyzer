@@ -22,21 +22,31 @@ def connect_to_database():
     return connection
 
 
-def update_db(db_connection):
+def update_db(db_connection, hashtags_list):
+    insert_hashtags_to_db(db_connection, hashtags_list)
+    hashtags_set = set(map(_truncate_hash, hashtags_list))
     path = os.path.dirname(os.path.abspath(__file__)) + '/backup/*'
     jsonl_files = glob.iglob(path)
     for jsonl_file in jsonl_files:
         with jsonlines.open(jsonl_file, mode='r') as reader:
             for tweet_dict in reader:
-                insert_into_db(db_connection, tweet_dict)
+                insert_into_db(db_connection, tweet_dict, hashtags_set)
     db_connection.close()
 
 
-def insert_into_db(db_connection, tweet_dict):
+def insert_hashtags_to_db(db_connection, hashtags_list):
+    cursor = db_connection.cursor()
+    for hashtag_id, hashtag_name in enumerate(hashtags_list):
+        postgres_insert_query = "INSERT INTO hashtags (id, name) VALUES (%s, %s);"
+        record_to_insert = (hashtag_id + 1, hashtag_name[1:])
+        cursor.execute(postgres_insert_query, record_to_insert)
+        db_connection.commit()
+
+
+def insert_into_db(db_connection, tweet_dict, hashtags_set):
     cursor = db_connection.cursor()
     full_text = _insert_text(tweet_dict)
     created_at = _insert_created_at(tweet_dict)
-
     user_dict = tweet_dict['user']
     if _is_retweet(tweet_dict['text']):
         postgres_insert_query = "INSERT INTO retweets (tweetid, userid) VALUES (%s, %s);"
@@ -54,6 +64,16 @@ def insert_into_db(db_connection, tweet_dict):
         record_to_insert = (tweet_dict['id'], tweet_dict['user']['id'], full_text, created_at, tweet_dict['in_reply_to_status_id'], tweet_dict['in_reply_to_user_id'])
         cursor.execute(postgres_insert_query, record_to_insert)
         db_connection.commit()
+        for hashtag_name in tweet_dict['entities']['hashtags']:
+            if hashtag_name['text'].lower() in hashtags_set:
+                postgres_select_query = "SELECT id FROM hashtags WHERE name LIKE %s;"
+                record_to_select = [hashtag_name['text'].lower()]
+                cursor.execute(postgres_select_query, record_to_select)
+                result = cursor.fetchone()
+                postgres_insert_query = "INSERT INTO tweetshashtags (hashtagid, tweetid) VALUES (%s, %s);"
+                record_to_insert = (result[0], tweet_dict['id'])
+                cursor.execute(postgres_insert_query, record_to_insert)
+                db_connection.commit()
     postgres_select_query = "SELECT name FROM users WHERE id=%s;"
     cursor.execute(postgres_select_query, [user_dict['id']])
     result = cursor.fetchone()
@@ -92,6 +112,10 @@ def _is_retweet(text):
     return re.search("^RT @.+:", text)
 
 
+def _truncate_hash(text):
+    return text[1:]
+
+
 def _insert_text(tweet_dict):
     if 'extended_tweet' in tweet_dict:
         full_text = tweet_dict['extended_tweet']['full_text']
@@ -126,8 +150,9 @@ def _insert_month_no(month_str):
 
 def main():
     print("connected")
+    brexit_hashtags_list = ['#brexit', '#stopbrexit', '#brexitshamples', '#brexitdeal', '#hardbrexit', '#getbrexitdone']
     conn = connect_to_database()
-    update_db(conn)
+    update_db(conn, brexit_hashtags_list)
 
 
 if __name__ == '__main__':
