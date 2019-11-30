@@ -146,7 +146,7 @@ def _insert_created_at(tweet_dict):
 
 
 def main():
-    logging.basicConfig(filename=os.path.dirname(os.path.abspath(__file__)) + '/logs/update_db.log', filemode='w', format='%(levelname)s - %(message)s')
+    logging.basicConfig(filename=os.path.dirname(os.path.abspath(__file__)) + '/logs/update_db.log', filemode='w', format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
     logging.warning("Connected to database successfully")
     brexit_hashtags_list = ['#brexit', '#stopbrexit', '#brexitshamples', '#brexitdeal', '#hardbrexit', '#getbrexitdone']
     conn = connect_to_database()
