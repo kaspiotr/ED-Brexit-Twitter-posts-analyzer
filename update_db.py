@@ -4,6 +4,7 @@ import os
 import glob
 import re
 from sentiment_analysis import SentimentAnalyzer
+from utils import insert_month_no
 
 
 def connect_to_database():
@@ -134,26 +135,8 @@ def _insert_text(tweet_dict):
 
 def _insert_created_at(tweet_dict):
     created_at = tweet_dict['created_at'].split()
-    created_at_timestamp = created_at[5] + '_' + _insert_month_no(created_at[1]) + '_' + created_at[2] + ' ' + created_at[3]
+    created_at_timestamp = created_at[5] + '_' + insert_month_no(created_at[1]) + '_' + created_at[2] + ' ' + created_at[3]
     return created_at_timestamp
-
-
-def _insert_month_no(month_str):
-    month_num = {
-        'Jan': '01',
-        'Feb': '02',
-        'Mar': '03',
-        'Apr': '04',
-        'May': '05',
-        'Jun': '06',
-        'Jul': '07',
-        'Aug': '08',
-        'Sep': '09',
-        'Oct': '10',
-        'Nov': '11',
-        'Dec': '12'
-    }
-    return month_num.get(month_str, 'Invalid month')
 
 
 def main():

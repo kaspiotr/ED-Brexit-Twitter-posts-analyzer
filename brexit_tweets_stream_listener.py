@@ -2,6 +2,7 @@ import tweepy
 import json
 import jsonlines
 import os
+from utils import insert_month_no
 
 
 # override tweepy.StreamListener to add logic to on_data
@@ -10,9 +11,9 @@ class BrexitTweetsStreamListener(tweepy.StreamListener):
 
     def on_data(self, raw_data):
         tweet_dict = json.loads(raw_data)
+        file_date_list = tweet_dict['created_at'].split()
         with jsonlines.open(
-                os.path.abspath(os.path.dirname(os.path.abspath(__file__))) + '/backup/tweets' + "_" + '_'.join(
-                        tweet_dict['created_at'].split()[:3]), mode='a') as writer:
+                os.path.abspath(os.path.dirname(os.path.abspath(__file__))) + '/backup/tweets' + "_" + file_date_list[-1] + "_" + insert_month_no(file_date_list[1]) + "_" + file_date_list[2], mode='a') as writer:
             writer.write(tweet_dict)
         return True
 
