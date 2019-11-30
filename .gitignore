@@ -120,3 +120,6 @@ backup
 
 # logs folder
 logs
+
+# some test sql queries
+tests.sql
