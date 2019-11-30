@@ -81,8 +81,12 @@ def insert_into_db(db_connection, tweet_dict, hashtags_set):
                 result = cursor.fetchone()
                 postgres_insert_query = "INSERT INTO tweetshashtags (hashtagid, tweetid) VALUES (%s, %s);"
                 record_to_insert = (result[0], tweet_dict['id'])
-                cursor.execute(postgres_insert_query, record_to_insert)
-                db_connection.commit()
+                try:
+                    cursor.execute(postgres_insert_query, record_to_insert)
+                    db_connection.commit()
+                except psycopg2.errors.UniqueViolation:
+                    logging.warning('Hash tag with id %s was used in the same tweet (with id %s) twice. Row was not inserted into tweetshashtags table' % (result[0], tweet_dict['id']))
+                    db_connection.rollback()
     postgres_select_query = "SELECT name FROM users WHERE id=%s;"
     cursor.execute(postgres_select_query, [user_dict['id']])
     result = cursor.fetchone()
