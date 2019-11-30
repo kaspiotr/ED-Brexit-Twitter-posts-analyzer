@@ -15,11 +15,11 @@ DROP TABLE IF EXISTS users CASCADE;
 
 CREATE TABLE users (
     id BIGINT,
-    name VARCHAR(50),
-    screenName VARCHAR(15),
-    location VARCHAR(50),
-    description VARCHAR (160),
-    language VARCHAR(10),
+    name VARCHAR(1680),
+    screenName VARCHAR(1680),
+    location VARCHAR(1680),
+    description VARCHAR (1680),
+    language VARCHAR(1680),
     followersNumber INT,
     friendsNumber INT,
     PRIMARY KEY (id)

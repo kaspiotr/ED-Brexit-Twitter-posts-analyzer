@@ -3,6 +3,7 @@ import jsonlines
 import os
 import glob
 import re
+import logging
 from sentiment_analysis import SentimentAnalyzer
 from utils import insert_month_no
 
@@ -28,11 +29,16 @@ def update_db(db_connection, hashtags_list):
     insert_hashtags_to_db(db_connection, hashtags_list)
     hashtags_set = set(map(_truncate_hash, hashtags_list))
     path = os.path.dirname(os.path.abspath(__file__)) + '/backup/*'
-    jsonl_files = glob.iglob(path)
-    for jsonl_file in jsonl_files:
+    for jsonl_file in sorted(glob.glob(path)):
         with jsonlines.open(jsonl_file, mode='r') as reader:
-            for tweet_dict in reader:
-                insert_into_db(db_connection, tweet_dict, hashtags_set)
+            if reader.__getattribute__('_fp').name.split("/")[-1][-1] == 'R':
+                pass
+            else:
+                for tweet_dict in reader:
+                    insert_into_db(db_connection, tweet_dict, hashtags_set)
+                file_name = os.path.dirname(os.path.abspath(__file__)) + '/backup/' + reader.__getattribute__('_fp').name.split("/")[-1]
+                logging.warning('File %s read uploaded to database successfully (R was appended to the name of the file)' % (file_name.split("/")[-1]))
+                os.rename(file_name, file_name + 'R')
     db_connection.close()
 
 
@@ -57,10 +63,10 @@ def insert_into_db(db_connection, tweet_dict, hashtags_set):
             cursor.execute(postgres_insert_query, record_to_insert)
             db_connection.commit()
         except psycopg2.errors.ForeignKeyViolation:
-            print('There were no tweet with id %s found in tweets table. Row was not inserted into retweets table' % tweet_dict['retweeted_status']['id'])
+            logging.warning('There were no tweet with id %s found in tweets table. Row was not inserted into retweets table' % tweet_dict['retweeted_status']['id'])
             db_connection.rollback()
         except psycopg2.errors.UniqueViolation:
-            print('User with id %s has retweeted the same tweet (with id %s) once again. Row was not inserted into retweets table' % (user_dict['id'], tweet_dict['retweeted_status']['id']))
+            logging.warning('User with id %s has retweeted the same tweet (with id %s) once again. Row was not inserted into retweets table' % (user_dict['id'], tweet_dict['retweeted_status']['id']))
             db_connection.rollback()
     else:
         postgres_insert_query = "INSERT INTO tweets (id, userid, fulltext, createdat, inreplytotweetid, inreplytouserid, sentiment) VALUES (%s, %s, %s, %s, %s, %s, %s);"
@@ -96,10 +102,10 @@ def insert_into_db(db_connection, tweet_dict, hashtags_set):
             cursor.execute(postgres_insert_query, record_to_insert)
             db_connection.commit()
         except psycopg2.errors.ForeignKeyViolation:
-            print('There were no user with id %s or tweet with id %s found. Row was not inserted into comments table' % (tweet_dict['in_reply_to_user_id'], tweet_dict['in_reply_to_status_id']))
+            logging.warning('There were no user with id %s or tweet with id %s found. Row was not inserted into comments table' % (tweet_dict['in_reply_to_user_id'], tweet_dict['in_reply_to_status_id']))
             db_connection.rollback()
         except psycopg2.errors.UniqueViolation:
-            print('User with id %s commented the same tweet (with id %s) twice. Row was not inserted into comments table' % (tweet_dict['in_reply_to_user_id'], tweet_dict['in_reply_to_status_id']))
+            logging.warning('User with id %s commented the same tweet (with id %s) twice. Row was not inserted into comments table' % (tweet_dict['in_reply_to_user_id'], tweet_dict['in_reply_to_status_id']))
             db_connection.rollback()
     if not _is_retweet(tweet_dict['text']) and len(tweet_dict['entities']['user_mentions']) > 0:
         for mentioned_user in tweet_dict['entities']['user_mentions']:
@@ -109,10 +115,10 @@ def insert_into_db(db_connection, tweet_dict, hashtags_set):
                 cursor.execute(postgres_insert_query, record_to_insert)
                 db_connection.commit()
             except psycopg2.errors.ForeignKeyViolation:
-                print('There were no tweet with id %s found in tweets table. Row was not inserted into mentions table' % tweet_dict['id'])
+                logging.warning('There were no tweet with id %s found in tweets table. Row was not inserted into mentions table' % tweet_dict['id'])
                 db_connection.rollback()
             except psycopg2.errors.UniqueViolation:
-                print('User with id %s was mentioned in the same tweet (with id %s) twice. Row was not inserted into mentions table' % (mentioned_user['id'], tweet_dict['id']))
+                logging.warning('User with id %s was mentioned in the same tweet (with id %s) twice. Row was not inserted into mentions table' % (mentioned_user['id'], tweet_dict['id']))
                 db_connection.rollback()
     cursor.close()
 
@@ -140,7 +146,8 @@ def _insert_created_at(tweet_dict):
 
 
 def main():
-    print("connected")
+    logging.basicConfig(filename=os.path.dirname(os.path.abspath(__file__)) + '/logs/update_db.log', filemode='w', format='%(levelname)s - %(message)s')
+    logging.warning("Connected to database successfully")
     brexit_hashtags_list = ['#brexit', '#stopbrexit', '#brexitshamples', '#brexitdeal', '#hardbrexit', '#getbrexitdone']
     conn = connect_to_database()
     update_db(conn, brexit_hashtags_list)
