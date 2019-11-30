@@ -117,3 +117,6 @@ dbconnectioncredentials
 
 # backup folder with tweets in josnl files
 backup
+
+# logs folder
+logs
