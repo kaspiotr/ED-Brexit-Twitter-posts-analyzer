@@ -62,7 +62,10 @@ def insert_into_db(db_connection, tweet_dict, hashtags_set, file_line_no):
     user_dict = tweet_dict['user']
     if _is_retweet(tweet_dict['text']):
         postgres_insert_query = "INSERT INTO retweets (tweetid, userid) VALUES (%s, %s);"
-        record_to_insert = (tweet_dict['retweeted_status']['id'], user_dict['id'])
+        try:
+            record_to_insert = (tweet_dict['retweeted_status']['id'], user_dict['id'])
+        except KeyError as e:
+            logging.error('%s) %s. Row was not inserted into retweets table' % (file_line_no, str(e)))
         try:
             cursor.execute(postgres_insert_query, record_to_insert)
             db_connection.commit()
