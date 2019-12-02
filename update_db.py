@@ -50,9 +50,13 @@ def insert_hashtags_to_db(db_connection, hashtags_list):
     for hashtag_id, hashtag_name in enumerate(hashtags_list):
         postgres_insert_query = "INSERT INTO hashtags (id, name) VALUES (%s, %s);"
         record_to_insert = (hashtag_id + 1, hashtag_name[1:])
-        cursor.execute(postgres_insert_query, record_to_insert)
-        db_connection.commit()
-        logging.info('Hashtag with id %s was inserted into hashtags table successfully' % (hashtag_id + 1))
+        try:
+            cursor.execute(postgres_insert_query, record_to_insert)
+            db_connection.commit()
+            logging.info('Hashtag with id %s was inserted into hashtags table successfully' % (hashtag_id + 1))
+        except psycopg2.errors.UniqueViolation:
+            logging.warning('There were already hashtag with id %s inserted into hashtags table. update_db.py script must have been run once again' % (hashtag_id + 1))
+            db_connection.rollback()
 
 
 def insert_into_db(db_connection, tweet_dict, hashtags_set, file_line_no):
@@ -64,12 +68,11 @@ def insert_into_db(db_connection, tweet_dict, hashtags_set, file_line_no):
         postgres_insert_query = "INSERT INTO retweets (tweetid, userid) VALUES (%s, %s);"
         try:
             record_to_insert = (tweet_dict['retweeted_status']['id'], user_dict['id'])
-        except KeyError as e:
-            logging.error('%s) %s. Row was not inserted into retweets table' % (file_line_no, str(e)))
-        try:
             cursor.execute(postgres_insert_query, record_to_insert)
             db_connection.commit()
             logging.info('%s) Retweet for tweet with id %s made by user with id %s was inserted into retweets table successfully' % (file_line_no, tweet_dict['retweeted_status']['id'], user_dict['id']))
+        except KeyError as e:
+            logging.error('%s) KeyError: %s. Row was not inserted into retweets table' % (file_line_no, str(e)))
         except psycopg2.errors.ForeignKeyViolation:
             logging.warning('%s) There were no tweet with id %s found in tweets table. Row was not inserted into retweets table' % (file_line_no, tweet_dict['retweeted_status']['id']))
             db_connection.rollback()
@@ -165,7 +168,7 @@ def _insert_created_at(tweet_dict):
 
 
 def main():
-    logging.basicConfig(filename=os.path.dirname(os.path.abspath(__file__)) + '/logs/update_db.log', filemode='w', format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=20)
+    logging.basicConfig(filename=os.path.dirname(os.path.abspath(__file__)) + '/logs/update_db.log', filemode='a', format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=20)
     logging.info("Connected to database successfully")
     brexit_hashtags_list = ['#brexit', '#stopbrexit', '#brexitshamples', '#brexitdeal', '#hardbrexit', '#getbrexitdone']
     conn = connect_to_database()
