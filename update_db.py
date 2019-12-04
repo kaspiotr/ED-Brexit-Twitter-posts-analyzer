@@ -82,8 +82,12 @@ def insert_into_db(db_connection, tweet_dict, hashtags_set, file_line_no):
     else:
         postgres_insert_query = "INSERT INTO tweets (id, userid, fulltext, createdat, inreplytotweetid, inreplytouserid, sentiment) VALUES (%s, %s, %s, %s, %s, %s, %s);"
         record_to_insert = (tweet_dict['id'], tweet_dict['user']['id'], full_text, created_at, tweet_dict['in_reply_to_status_id'], tweet_dict['in_reply_to_user_id'], SentimentAnalyzer.get_tweet_sentiment(full_text))
-        cursor.execute(postgres_insert_query, record_to_insert)
-        db_connection.commit()
+        try:
+            cursor.execute(postgres_insert_query, record_to_insert)
+            db_connection.commit()
+        except psycopg2.errors.UniqueViolation:
+            logging.warning('%s) Tweet with id %s was already inserted into tweets table. Row was not inserted into tweets table' % (file_line_no, tweet_dict['id']))
+            db_connection.rollback()
         logging.info('%s) Tweet with id %s was inserted into database successfully' % (file_line_no, tweet_dict['id']))
         for hashtag_name in tweet_dict['entities']['hashtags']:
             if hashtag_name['text'].lower() in hashtags_set:
