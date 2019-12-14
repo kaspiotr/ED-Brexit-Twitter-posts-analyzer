@@ -1,5 +1,19 @@
 DROP TABLE IF EXISTS tweets CASCADE;
 
+DROP TABLE IF EXISTS users CASCADE;
+
+CREATE TABLE users (
+                       id BIGINT,
+                       name VARCHAR(1680),
+                       screenName VARCHAR(1680),
+                       location VARCHAR(1680),
+                       description VARCHAR (1680),
+                       language VARCHAR(1680),
+                       followersNumber INT,
+                       friendsNumber INT,
+                       PRIMARY KEY (id)
+);
+
 CREATE TABLE tweets (
     id BIGINT,
     userId BIGINT REFERENCES users(id),
@@ -8,20 +22,6 @@ CREATE TABLE tweets (
     inReplyToTweetId BIGINT,
     inReplyToUserId BIGINT,
     sentiment DOUBLE PRECISION,
-    PRIMARY KEY (id)
-);
-
-DROP TABLE IF EXISTS users CASCADE;
-
-CREATE TABLE users (
-    id BIGINT,
-    name VARCHAR(1680),
-    screenName VARCHAR(1680),
-    location VARCHAR(1680),
-    description VARCHAR (1680),
-    language VARCHAR(1680),
-    followersNumber INT,
-    friendsNumber INT,
     PRIMARY KEY (id)
 );
 
