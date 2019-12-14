@@ -108,6 +108,9 @@ def insert_into_db(db_connection, tweet_dict, hashtags_set, file_line_no):
                 except psycopg2.errors.UniqueViolation:
                     logging.warning('%s) Hash tag with id %s was used in the same tweet (with id %s) twice. Row was not inserted into tweetshashtags table' % (file_line_no, result[0], tweet_dict['id']))
                     db_connection.rollback()
+                except psycopg2.errors.ForeignKeyViolation:
+                    logging.warning('%s) Tweet with id %s was not present in tweets table. Row was not inserted into tweetshashtags table' % (file_line_no, tweet_dict['id']))
+                    db_connection.rollback()
     postgres_select_query = "SELECT name FROM users WHERE id=%s;"
     cursor.execute(postgres_select_query, [user_dict['id']])
     result = cursor.fetchone()
