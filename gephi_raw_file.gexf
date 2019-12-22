@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gexf xmlns="http://www.gexf.net/1.2draft" version="1.2">
+    <graph mode="static" defaultedgetype="directed">
+        <attributes class="node" mode="static">
+            $attributes_list
+        </attributes>
+        <nodes>
+            $node_list
+        </nodes>
+        <edges>
+            $edge_list
+        </edges>
+    </graph>
+</gexf>
