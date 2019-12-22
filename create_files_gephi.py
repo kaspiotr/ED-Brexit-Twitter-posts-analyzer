@@ -36,6 +36,25 @@ def fill_gephi_file(filename, new_filename, nodes, edges, attributes=None):
     new_filename_write.close()
 
 
+def create_input_sentiment(nodes, edges, User):
+    nodes_str, edges_str = [], []
+    attributes_definiton = [ATTIBUTE_DEFINE_BASE_ROW % ('followers_number', 'Followers number', 'int'),
+                            ATTIBUTE_DEFINE_BASE_ROW % ('sentiment_average', 'Sentiment', 'float')]
+
+    for node in nodes:
+        if isinstance(node, User):
+            attributes = [ATTVALUE_BASE_ROW % ('followers_number', node.followers_number),
+                          ATTVALUE_BASE_ROW % ('sentiment_average', node.sentiment_average)]
+            nodes_str.append(NODE_ATTRIBUTE_BASE_ROW % (node.id, node.name, ("\n".join(attributes))))
+        else:
+            nodes_str.append(NODE_BASE_ROW % (node.id, node.name))
+
+    for i, edge in enumerate(edges):
+        edges_str.append(EDGE_BASE_ROW % (i, edge[0], edge[1], edge[2]))
+
+    return nodes_str, edges_str, attributes_definiton
+
+
 def create_input(nodes, edges, User):
     nodes_str, edges_str = [], []
     attributes_definiton = [ATTIBUTE_DEFINE_BASE_ROW % ('followers_number', 'Followers number', 'int'),
@@ -130,11 +149,36 @@ def hashtags(connection):
                     nodes_str, edges_str, attributes)
 
 
+def user_sentiment(connection):
+    SQL_QUERY = "SELECT users.id, users.screenname, avg(sentiment) AS sentiment_average, users.followersnumber FROM USERS "\
+                 "INNER JOIN tweets on users.id = tweets.userid " \
+                 "WHERE users.followersnumber > 100000 " \
+                 "GROUP BY users.id, users.screenname, users.followersnumber " \
+                 "ORDER BY users.followersnumber DESC " \
+                 "LIMIT 100;"
+
+
+    User = namedtuple("User", 'id name followers_number sentiment_average')
+    nodes, edges = set(), []
+    cursor = connection.cursor()
+    cursor.execute(SQL_QUERY)
+
+    for i in cursor.fetchall():
+        nodes.add(User(i[0], i[1], i[3], i[2]))
+
+    nodes_str, edges_str, attributes = create_input_sentiment(list(nodes), edges, User)
+
+    fill_gephi_file("gephi_raw_file.gexf", "gephi_sentiment3.gexf",
+                    nodes_str, edges_str, attributes)
+
+
+
 def main():
     connection = connect_to_database()
-    mentions(connection)
-    retweets(connection)
-    hashtags(connection)
+    # mentions(connection)
+    # retweets(connection)
+    # hashtags(connection)
+    user_sentiment(connection)
 
 
 if __name__ == "__main__":
