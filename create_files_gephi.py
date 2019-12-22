@@ -157,7 +157,6 @@ def user_sentiment(connection):
                  "ORDER BY users.followersnumber DESC " \
                  "LIMIT 100;"
 
-
     User = namedtuple("User", 'id name followers_number sentiment_average')
     nodes, edges = set(), []
     cursor = connection.cursor()
@@ -168,16 +167,15 @@ def user_sentiment(connection):
 
     nodes_str, edges_str, attributes = create_input_sentiment(list(nodes), edges, User)
 
-    fill_gephi_file("gephi_raw_file.gexf", "gephi_sentiment3.gexf",
+    fill_gephi_file("gephi_raw_file.gexf", "gephi_sentiment.gexf",
                     nodes_str, edges_str, attributes)
-
 
 
 def main():
     connection = connect_to_database()
-    # mentions(connection)
-    # retweets(connection)
-    # hashtags(connection)
+    mentions(connection)
+    retweets(connection)
+    hashtags(connection)
     user_sentiment(connection)
 
 
