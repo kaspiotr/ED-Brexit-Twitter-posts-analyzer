@@ -88,6 +88,10 @@ def insert_into_db(db_connection, tweet_dict, hashtags_set, file_line_no):
         except psycopg2.errors.UniqueViolation:
             logging.warning('%s) Tweet with id %s was already inserted into tweets table. Row was not inserted into tweets table' % (file_line_no, tweet_dict['id']))
             db_connection.rollback()
+        except psycopg2.errors.ForeignKeyViolation:
+            logging.warning('%s) User with id id %s that wrote tweet with id %s was not found in the users table. Row was not inserted into tweets table' % (file_line_no, user_dict['id'], tweet_dict['id']))
+            db_connection.rollback()
+
         logging.info('%s) Tweet with id %s was inserted into database successfully' % (file_line_no, tweet_dict['id']))
         for hashtag_name in tweet_dict['entities']['hashtags']:
             if hashtag_name['text'].lower() in hashtags_set:
@@ -103,6 +107,9 @@ def insert_into_db(db_connection, tweet_dict, hashtags_set, file_line_no):
                     logging.info('%s) Hashtag with id %s used with tweet with id %s was inserted into database successfully' % (file_line_no, result[0], tweet_dict['id']))
                 except psycopg2.errors.UniqueViolation:
                     logging.warning('%s) Hash tag with id %s was used in the same tweet (with id %s) twice. Row was not inserted into tweetshashtags table' % (file_line_no, result[0], tweet_dict['id']))
+                    db_connection.rollback()
+                except psycopg2.errors.ForeignKeyViolation:
+                    logging.warning('%s) Tweet with id %s was not present in tweets table. Row was not inserted into tweetshashtags table' % (file_line_no, tweet_dict['id']))
                     db_connection.rollback()
     postgres_select_query = "SELECT name FROM users WHERE id=%s;"
     cursor.execute(postgres_select_query, [user_dict['id']])
